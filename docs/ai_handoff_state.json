@@ -1,0 +1,64 @@
+{
+  "project_name": "novel-local-ai",
+  "current_stage": "MVP 3 Phase 3 plus stability patches",
+  "last_verified": "2026-06-12",
+  "verified_tests": {
+    "pytest": "38 passed",
+    "frontend_build": "passed; 42 modules transformed",
+    "loop_mvp": "passed with mock provider",
+    "mvp_1_1_stability": "passed",
+    "mvp_3_auto_pipeline": "passed with mock provider",
+    "mvp_3_multi_chapter": "passed with mock provider",
+    "real_lm_studio": "qwen3.6-27b-crack verified for streaming, automatic revision, recheck and commit"
+  },
+  "core_flows": {
+    "old_generate_api": "passing",
+    "loop_run": "passing",
+    "approval_flow": "implemented_and_passing",
+    "auto_revise": "implemented_and_passing",
+    "auto_commit": "implemented_and_passing",
+    "multi_chapter_run": "implemented_and_passing",
+    "provider_recovery": "implemented; LM Studio recovery observed",
+    "state_update": "chapter_summary_story_memory_only",
+    "reverse_story_engineering": "not_implemented",
+    "frontend_e2e": "not_implemented"
+  },
+  "database_status": {
+    "migration_head": "f3a421d91870",
+    "repository_database": "stale at 0f19e48aa920 on 2026-06-12",
+    "deployed_database": "f3a421d91870; integrity_check ok on 2026-06-12"
+  },
+  "safe_next_tasks": [
+    "Implement Reverse Story Engineering P0 as staging-only extraction",
+    "Add evidence-backed accept/reject APIs for extraction candidates",
+    "Add sensitive prompt/response retention and redaction strategy",
+    "Add Version Diff",
+    "Add frontend Playwright E2E with isolated mock backend"
+  ],
+  "do_not_break": [
+    "POST /api/chapters/{chapter_id}/generate",
+    "WritingTask and GenerationRun legacy flow",
+    "ChapterVersion append-only history",
+    "manual approval content gate",
+    "blocker prevents auto commit",
+    "JsonGuard and Pydantic failure propagation",
+    "RunStep and ModelCall audit logging",
+    "no direct model output writes to Canon"
+  ],
+  "key_files": [
+    "CLAUDE.md",
+    "docs/AI_HANDOFF_INDEX.md",
+    "docs/AI_CURRENT_STATUS.md",
+    "services/api/app/routers/chapters.py",
+    "services/api/app/routers/loop_runs.py",
+    "services/api/app/routers/auto_runs.py",
+    "services/api/app/routers/multi_chapter_runs.py",
+    "services/api/app/workflow/runner.py",
+    "services/api/app/services/auto_pipeline.py",
+    "services/api/app/services/multi_chapter.py",
+    "services/api/app/models/loop_entities.py",
+    "services/api/app/models/auto_entities.py",
+    "apps/web/src/features/chapters/ChapterWorkspaceV2.tsx",
+    "apps/web/src/features/runs/RunDetailPage.tsx"
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-06-14",
+  "task": "正文(writer)评测：5 候选用线上同款 draft_writer 提示词写《记忆档案馆》第六章《转移》(夜里秘密转移违规记忆芯片)，评指令遵循 + 文笔。",
+  "method": "每篇 3 个独立 LLM 评委打分(对抗核验 canon)；客观指标(字数/格式)程序化统计；用例与稿件存 scripts/writer_bench/。",
+  "dims": "文笔 prose / 连贯 coherence / 张力 tension / 人物声音 voice / 节制 restraint，各 1–5。指令遵循=6 情节节点命中 + canon 零违规 + 只输出正文 + 字数 800–1600。",
+  "rows": [
+    {
+      "label": "去审核 · 35B-A3B(现役)",
+      "service": "LM Studio",
+      "paramB": 35,
+      "category": "去审核",
+      "overall": 8.0,
+      "wc": 1504,
+      "genS": 66,
+      "beats": 6,
+      "canonClean": true,
+      "formatOk": true,
+      "len": "合适",
+      "q": {
+        "prose": 4,
+        "coherence": 4.3,
+        "tension": 4,
+        "voice": 4,
+        "restraint": 3.7
+      },
+      "verdict": "best",
+      "note": "并列最高分且最快(66s,MoE激活3B)，字数守得最好，6节点全中、canon干净。唯一瑕疵:把规则B原文当旁白(背设定出戏)——是提示词漏洞，非模型问题。正文推荐坐实。"
+    },
+    {
+      "label": "官方 · Qwen3.5 27B",
+      "service": "oMLX",
+      "paramB": 27,
+      "category": "官方",
+      "overall": 8.0,
+      "wc": 1651,
+      "genS": 221,
+      "beats": 6,
+      "canonClean": true,
+      "formatOk": true,
+      "len": "合适",
+      "q": {
+        "prose": 4,
+        "coherence": 4,
+        "tension": 4,
+        "voice": 4,
+        "restraint": 4
+      },
+      "verdict": "good",
+      "note": "🗑已删除。最均衡、节制最好(4分)，时间戳卡点严密。但慢(221s)。之前检查JSON坏，正文反而稳。"
+    },
+    {
+      "label": "qwopus合并 · 27B",
+      "service": "LM Studio",
+      "paramB": 27,
+      "category": "改版",
+      "overall": 8.0,
+      "wc": 2002,
+      "genS": 303,
+      "beats": 6,
+      "canonClean": true,
+      "formatOk": true,
+      "len": "偏长",
+      "q": {
+        "prose": 4,
+        "coherence": 5,
+        "tension": 4,
+        "voice": 4.3,
+        "restraint": 3.7
+      },
+      "verdict": "good",
+      "note": "🗑已删除。连贯最佳(5)、苏婷钩子逻辑闭环最妙。但偏长(2002)、慢(303s)、比喻略堆砌。"
+    },
+    {
+      "label": "去审核 · 40B Opus",
+      "service": "LM Studio",
+      "paramB": 40,
+      "category": "去审核",
+      "overall": 6.7,
+      "wc": 2602,
+      "genS": 314,
+      "beats": 6,
+      "canonClean": true,
+      "formatOk": true,
+      "len": "严重超长",
+      "q": {
+        "prose": 4,
+        "coherence": 3.3,
+        "tension": 4,
+        "voice": 4,
+        "restraint": 2.7
+      },
+      "verdict": "weak",
+      "note": "时间线硬伤(25分钟跨城不成立)、严重超纲(2602)、情节节点乱序、啰嗦(节制2.7)。最大不推荐。"
+    },
+    {
+      "label": "去审核 · Gemma 31B",
+      "service": "—",
+      "paramB": 31,
+      "category": "去审核",
+      "overall": null,
+      "wc": null,
+      "genS": null,
+      "beats": null,
+      "canonClean": null,
+      "formatOk": null,
+      "len": "—",
+      "q": null,
+      "verdict": "fail",
+      "note": "🗑已删除。模型本身坏：JANG_4M-CRACK魔改出非标准结构，oMLX与LM Studio两个MLX加载器都吃不下。建议弃用。"
+    }
+  ],
+  "conclusion": "结论：正文角色与检查相反——去审核模型在这里很强(露骨不拒答+守指令+守canon)。最优解是现役 去审核 Qwen3.6-35B-A3B：并列最高分(8.0)却快 3–5 倍(66s vs 221–314s)、字数控制最好。所有候选都 canon 零违规、6节点全中，说明 draft_writer 提示词的硬规则有效。但评测暴露一个提示词漏洞：模型会把世界观规则原文当旁白塞进正文(背设定出戏)，建议在 draft_writer 加一条'不得复述规则/设定原文，只把约束隐含在情节里'。"
+}

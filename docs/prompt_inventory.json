@@ -1,0 +1,317 @@
+[
+  {
+    "name": "chapter_generation",
+    "type": "Workflow Prompt",
+    "file_path": "services/api/app/prompts/chapter_generation.md",
+    "purpose": "根据章节目标、角色状态、世界规则和近章摘要生成单章正文。",
+    "input_schema": {
+      "chapter_title": "string",
+      "context": "string"
+    },
+    "output_schema": {
+      "type": "string",
+      "description": "可直接写入书稿的章节正文"
+    },
+    "model_params": {
+      "provider_defaults": true,
+      "workspace_temperature": 0.75,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "迁移为 Draft Writer，并用包含 chapter_id、draft_markdown、scene_breakdown 的 JSON envelope 包装正文。"
+  },
+  {
+    "name": "chapter_summary",
+    "type": "Rule Compiler Prompt",
+    "file_path": "services/api/app/prompts/chapter_summary.md",
+    "purpose": "从章节正文提取摘要、关键事件、未解决冲突和伏笔。",
+    "input_schema": {
+      "chapter_title": "string",
+      "chapter_content": "string"
+    },
+    "output_schema": {
+      "summary": "string <= 300 Chinese characters",
+      "key_events": "string[]",
+      "unresolved_conflicts": "string[]",
+      "foreshadowing": "string[]"
+    },
+    "model_params": {
+      "temperature": 0.2,
+      "minimum_max_tokens": 1200,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "拆分为章节摘要和 State Updater；事件与伏笔改用带 ID、状态和证据的结构。"
+  },
+  {
+    "name": "character_state_update",
+    "type": "Rule Compiler Prompt",
+    "file_path": "services/api/app/prompts/character_state_update.md",
+    "purpose": "从角色卡和正文提取待人工确认的人物状态变化。",
+    "input_schema": {
+      "characters": "string",
+      "chapter_content": "string"
+    },
+    "output_schema": {
+      "updates": [
+        {
+          "character_id": "string",
+          "character_name": "string",
+          "changes": "object",
+          "evidence": "string",
+          "confidence": "number"
+        }
+      ]
+    },
+    "model_params": {
+      "workspace_temperature": 0.2,
+      "workspace_max_tokens": 1600,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "迁移到 State Updater staging；代码验证角色 ID、允许字段和 evidence 后再写入。"
+  },
+  {
+    "name": "chapter_review",
+    "type": "Scoring Prompt",
+    "file_path": "services/api/app/prompts/chapter_review.md",
+    "purpose": "一次性检查章节目标、人物、时间线、重复、剧情遗漏和风格。",
+    "input_schema": {
+      "context": "string",
+      "chapter_content": "string"
+    },
+    "output_schema": {
+      "score": "number",
+      "goal_alignment": "string",
+      "character_consistency": "string",
+      "timeline_consistency": "string",
+      "repetition": "string",
+      "missing_plot_points": "string",
+      "style_issues": "string",
+      "suggestions": "string[]"
+    },
+    "model_params": {
+      "workspace_temperature": 0.2,
+      "workspace_max_tokens": 1600,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "拆成 Continuity、Character、Plot Rhythm 三个 checker，并由代码根据 severity 决定是否修订。"
+  },
+  {
+    "name": "continuity_check",
+    "type": "Critic Prompt",
+    "file_path": "services/api/app/prompts/continuity_check.md",
+    "purpose": "对照 Canon 检查人物、时间线、世界规则和知识边界冲突。",
+    "input_schema": {
+      "context": "string",
+      "chapter_content": "string"
+    },
+    "output_schema": {
+      "issues": [
+        {
+          "type": "character|timeline|world|knowledge",
+          "severity": "low|medium|high",
+          "detail": "string",
+          "evidence": "string"
+        }
+      ]
+    },
+    "model_params": {
+      "recommended_temperature": 0.1,
+      "streaming": false,
+      "currently_callable": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "扩展为 Continuity Checker，增加 passed、blocker、item、location、causality 和 suggested_fix。"
+  },
+  {
+    "name": "outline_expand",
+    "type": "Workflow Prompt",
+    "file_path": "services/api/app/prompts/outline_expand.md",
+    "purpose": "把章节目标扩展为 2 至 6 个顺序场景。",
+    "input_schema": {
+      "context": "string"
+    },
+    "output_schema": {
+      "scenes": [
+        {
+          "order_index": "integer",
+          "title": "string",
+          "goal": "string",
+          "outline_content": "string",
+          "character_ids": "string[]",
+          "location_id": "string|null"
+        }
+      ]
+    },
+    "model_params": {
+      "recommended_temperature": 0.3,
+      "streaming": false,
+      "currently_callable": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "作为 Chapter Planner 的可选场景拆分步骤，结果写入 ChapterPlan 而不是直接写正文。"
+  },
+  {
+    "name": "creative_story_outline",
+    "type": "Workflow Prompt",
+    "file_path": "services/api/app/routers/creative.py::OPERATION_GUIDES[story_outline]",
+    "purpose": "把用户想法扩展为长篇故事框架和章节计划。",
+    "input_schema": {
+      "novel_context": "string",
+      "idea": "string",
+      "reference_text": "string"
+    },
+    "output_schema": {
+      "type": "markdown"
+    },
+    "model_params": {
+      "temperature": 0.45,
+      "max_tokens": 2400,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "迁移为 story_framework_builder，输出固定 JSON 字段。"
+  },
+  {
+    "name": "creative_characters",
+    "type": "Skill Prompt",
+    "file_path": "services/api/app/routers/creative.py::OPERATION_GUIDES[characters]",
+    "purpose": "生成角色欲望、恐惧、秘密、关系冲突和人物弧光。",
+    "input_schema": {
+      "novel_context": "string",
+      "idea": "string",
+      "reference_text": "string"
+    },
+    "output_schema": {
+      "type": "markdown"
+    },
+    "model_params": {
+      "temperature": 0.45,
+      "max_tokens": 2400,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "迁移为 character_model_builder，并为每个角色生成稳定 character_id。"
+  },
+  {
+    "name": "creative_worldbuilding",
+    "type": "Skill Prompt",
+    "file_path": "services/api/app/routers/creative.py::OPERATION_GUIDES[worldbuilding]",
+    "purpose": "生成时代、地点、组织、规则、代价和剧情矛盾。",
+    "input_schema": {
+      "novel_context": "string",
+      "idea": "string",
+      "reference_text": "string"
+    },
+    "output_schema": {
+      "type": "markdown"
+    },
+    "model_params": {
+      "temperature": 0.45,
+      "max_tokens": 2400,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "迁移为 Story Bible 条目生成器；世界规则、地点和组织分别结构化。"
+  },
+  {
+    "name": "creative_chapter_plan",
+    "type": "Workflow Prompt",
+    "file_path": "services/api/app/routers/creative.py::OPERATION_GUIDES[chapter_plan]",
+    "purpose": "把现有构想拆成连续章节任务。",
+    "input_schema": {
+      "novel_context": "string",
+      "idea": "string",
+      "reference_text": "string"
+    },
+    "output_schema": {
+      "type": "markdown_table"
+    },
+    "model_params": {
+      "temperature": 0.45,
+      "max_tokens": 2400,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "迁移为 chapter_planner，输出 required_events、hooks、emotional_curve 和 forbidden_moves。"
+  },
+  {
+    "name": "creative_expand",
+    "type": "Skill Prompt",
+    "file_path": "services/api/app/routers/creative.py::OPERATION_GUIDES[expand]",
+    "purpose": "把片段或想法扩写成可编辑小说内容。",
+    "input_schema": {
+      "novel_context": "string",
+      "idea": "string",
+      "reference_text": "string"
+    },
+    "output_schema": {
+      "type": "prose"
+    },
+    "model_params": {
+      "temperature": 0.8,
+      "max_tokens": 2600,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "保留为手动 Draft Writer 模式；未经检查和人工确认不得写入 Canon。"
+  },
+  {
+    "name": "lm_studio_system_wrapper",
+    "type": "Role Prompt",
+    "file_path": "services/api/app/providers/adapters.py::LMStudioAdapter.generate_text",
+    "purpose": "为 force_no_think 的 LM Studio completion 请求设置统一角色和最终输出边界。",
+    "input_schema": {
+      "business_prompt": "string"
+    },
+    "output_schema": {
+      "type": "string"
+    },
+    "model_params": {
+      "force_no_think": true,
+      "stop": [
+        "<|im_end|>"
+      ],
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "保留为 Provider 协议层 wrapper，不与具体 Agent 角色 Prompt 混合。"
+  },
+  {
+    "name": "provider_health_check",
+    "type": "Skill Prompt",
+    "file_path": "services/api/app/routers/model_providers.py::test_provider",
+    "purpose": "确认 Provider 能返回非空最终文本。",
+    "input_schema": {},
+    "output_schema": {
+      "expected_text": "OK"
+    },
+    "model_params": {
+      "temperature": 0,
+      "max_tokens": 512,
+      "streaming": false
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "保留为基础设施健康检查，不计入章节 Agent 调用轮次。"
+  },
+  {
+    "name": "context_style_output_constraints",
+    "type": "Skill Prompt",
+    "file_path": "services/api/app/services/context_builder.py::build_context",
+    "purpose": "把小说风格、禁止事项和正文输出要求加入运行时上下文。",
+    "input_schema": {
+      "style_guide": "string",
+      "forbidden_content": "string"
+    },
+    "output_schema": {
+      "type": "prompt_section"
+    },
+    "model_params": {
+      "context_weight": 0.05
+    },
+    "can_migrate_to_novel_loop_agent": true,
+    "migration_note": "迁移为 Context Assembler 的确定性 section，并保留独立 token 配额。"
+  }
+]
