@@ -542,3 +542,110 @@ export interface MultiChapterRun extends Timestamped {
   started_at: string | null;
   finished_at: string | null;
 }
+
+// ───────────────────────── 故事地图（Story Map）——与后端 schemas/story_map.py 一一对应 ─────────────────────────
+
+export interface StoryMapChapter {
+  id: string;
+  order_index: number;
+  title: string;
+  status: string;
+  word_count: number;
+  summary: string;
+}
+
+export interface StoryMapCharacter {
+  id: string;
+  name: string;
+  role: string;
+  arc: string;
+  presence_chapters: number[];
+}
+
+export interface StoryMapTimelineEvent {
+  id: string;
+  chapter_id: string | null;
+  title: string;
+  story_time: string;
+  story_order: number | null;
+  description: string;
+  character_ids: string[];
+}
+
+export interface StoryMapPlotThread {
+  id: string;
+  name: string;
+  description: string;
+  status: string;
+  resolution: string;
+  related_chapter_ids: string[];
+}
+
+export interface StoryMapForeshadowing {
+  id: string;
+  description: string;
+  status: string;
+  planted_chapter_id: string | null;
+  resolved_chapter_id: string | null;
+  notes: string;
+}
+
+export interface StoryMapRelationship {
+  source_id: string;
+  target_id: string;
+  type: string;
+  description: string;
+  mutual: boolean;
+}
+
+export interface StoryMapUnmatchedRelationship {
+  source_id: string;
+  target_name: string;
+  description: string;
+}
+
+export interface StoryMapStats {
+  review_scores: Array<{ chapter_id: string; score: number | null }>;
+  foreshadow_counts: { open: number; resolved: number; overdue: number };
+}
+
+export interface StoryMap {
+  chapters: StoryMapChapter[];
+  characters: StoryMapCharacter[];
+  timeline_events: StoryMapTimelineEvent[];
+  plot_threads: StoryMapPlotThread[];
+  foreshadowing: StoryMapForeshadowing[];
+  relationships: StoryMapRelationship[];
+  unmatched: StoryMapUnmatchedRelationship[];
+  stats: StoryMapStats;
+}
+
+export interface StoryMapExtractRun extends Timestamped {
+  project_id: string;
+  novel_id: string;
+  provider_id: string | null;
+  chapter_ids_json: string;
+  total_chapters: number;
+  processed_chapters: number;
+  current_chapter_title: string;
+  candidate_count: number;
+  options_json: string;
+  status: string;
+  error_code: string;
+  error: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+// 复用 story-engineering 候选结构（staged_storymap_*）
+export interface StagedCandidate extends Timestamped {
+  project_id: string;
+  novel_id: string;
+  chapter_id: string | null;
+  source_id: string | null;
+  record_type: string;
+  status: string;
+  content_json: string;
+  evidence_json: string;
+  metadata_json: string;
+}

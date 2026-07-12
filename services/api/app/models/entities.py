@@ -188,6 +188,9 @@ class TimelineEvent(Base, TimestampMixin):
     chapter_id = Column(String(36), ForeignKey("chapters.id", ondelete="SET NULL"), nullable=True)
     title = Column(String(240), nullable=False)
     story_time = Column(String(240), default="", nullable=False)
+    # 故事内时间的相对序号（提取器输出）：支持「叙事顺序 vs 故事顺序」双模式切换。
+    # 可空 additive 列：旧数据不受影响；story_time 仍是自由文本，不参与排序。
+    story_order = Column(Integer, nullable=True)
     description = Column(Text, default="", nullable=False)
     character_ids_json = Column(Text, default="[]", nullable=False)
 

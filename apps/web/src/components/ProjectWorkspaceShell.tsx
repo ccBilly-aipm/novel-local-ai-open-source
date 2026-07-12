@@ -7,8 +7,9 @@ import CreativeStudio from "./CreativeStudio";
 import ProjectOverview from "./ProjectOverview";
 import Workspace from "./Workspace";
 import Worldbuilding from "./Worldbuilding";
+import StoryMapPage from "../features/storymap/StoryMapPage";
 
-export type ProjectView = "overview" | "chapters" | "creative" | "characters" | "world" | "runs" | "advanced";
+export type ProjectView = "overview" | "chapters" | "storymap" | "creative" | "characters" | "world" | "runs" | "advanced";
 
 interface Props {
   project: Project;
@@ -26,6 +27,7 @@ interface Props {
 const tabs: Array<[ProjectView, string]> = [
   ["overview", "总览"],
   ["chapters", "章节"],
+  ["storymap", "故事地图"],
   ["creative", "创作中心"],
   ["characters", "人物"],
   ["world", "设定"],
@@ -79,6 +81,8 @@ export default function ProjectWorkspaceShell({
         <ProjectOverview project={project} novel={novel} providers={providers} runs={runs} onNavigate={onNavigate} onOpenRun={onOpenRun} />
       ) : view === "chapters" ? (
         <ChapterWorkspaceV2 projectId={project.id} novel={novel} providers={providers} runs={runs} onOpenRun={onOpenRun} onRunsChanged={onRefresh} />
+      ) : view === "storymap" ? (
+        <StoryMapPage projectId={project.id} novel={novel} providers={providers} />
       ) : view === "creative" ? (
         <CreativeStudio novel={novel} onNovelChange={onNovelChange} onOpenChapters={() => onNavigate("chapters")} />
       ) : view === "characters" ? (

@@ -190,6 +190,33 @@ class DeconstructionRun(Base, AutoTimestampMixin):
     finished_at = Column(DateTime, nullable=True)
 
 
+class StoryMapExtractRun(Base, AutoTimestampMixin):
+    """故事地图 AI 提取的异步任务（进度跟踪，不存候选）。
+
+    机制照抄 DeconstructionRun：候选写 StoryMemoryRecord(record_type=staged_storymap_*,
+    source_id=本 run.id)，本表只跟踪逐章提取进度。单章失败记录后继续下一章，
+    最终按是否有失败标注 partial。
+    """
+
+    __tablename__ = "story_map_extract_runs"
+
+    id = Column(String(36), primary_key=True, default=new_id)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    novel_id = Column(String(36), ForeignKey("novels.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider_id = Column(String(36), ForeignKey("model_providers.id", ondelete="SET NULL"), nullable=True)
+    chapter_ids_json = Column(Text, default="[]", nullable=False)
+    total_chapters = Column(Integer, default=0, nullable=False)
+    processed_chapters = Column(Integer, default=0, nullable=False)
+    current_chapter_title = Column(String(240), default="", nullable=False)
+    candidate_count = Column(Integer, default=0, nullable=False)
+    options_json = Column(Text, default="{}", nullable=False)
+    status = Column(String(32), default="pending", nullable=False, index=True)
+    error_code = Column(String(80), default="", nullable=False)
+    error = Column(Text, default="", nullable=False)
+    started_at = Column(DateTime, nullable=True)
+    finished_at = Column(DateTime, nullable=True)
+
+
 class CheckpointSnapshot(Base, AutoTimestampMixin):
     __tablename__ = "checkpoint_snapshots"
 

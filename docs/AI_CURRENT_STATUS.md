@@ -225,6 +225,15 @@ Observed runtime on 2026-06-12:
 - Managed llama.cpp is configured at `127.0.0.1:18081`.
 - Other configured providers may be untested; inspect `/api/model-providers` before relying on them.
 
+## 故事地图后端（阶段 1，已实现）
+
+- 新增聚合读接口 `GET /api/novels/{id}/story-map`：一次返回 chapters / characters /
+  timeline_events / plot_threads / foreshadowing / 归一化 relationships / unmatched / stats。
+- 时间线事件 / 情节线 / 伏笔各有独立 additive CRUD 路由；`TimelineEvent` 新增可空 `story_order`。
+- AI 逐章提取管线（`POST /novels/{id}/story-map/extract` + 轮询 extract-runs）：候选写 staging
+  （record_type=`staged_storymap_*`），复用 story-engineering 的 list/accept/reject 接口；无模型服务时
+  优雅失败并留 PARTIAL 记录。详见 `docs/32_story_map_backend_report.md`。
+
 ## Most trustworthy conclusions
 
 1. The legacy API and new Loop path coexist and the backend regression suite passes.

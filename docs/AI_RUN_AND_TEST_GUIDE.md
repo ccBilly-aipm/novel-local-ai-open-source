@@ -507,3 +507,37 @@ Inspect both parent and child state after a restart.
 The product uses several daemon threads and SQLite. Check for long transactions, duplicate processes
 and multiple uvicorn workers. Current deployment should remain single-process. Do not solve this by
 disabling foreign keys or removing unique indexes.
+
+## 故事地图前端 E2E（Playwright）
+
+故事地图页有一份 Playwright 冒烟测试：`apps/web/e2e/storymap.spec.ts`
+（造数 → 打开 `/#/projects/{id}/storymap` → 断言四视图可切换、SVG 有节点、hover/click 联动、提取对话框可打开）。
+
+前置：先安装浏览器 `cd apps/web && npx playwright install chromium`。
+
+**重要（避开部署副本）**：本机 LaunchAgent 部署副本常年占用 `:5173`（前端）与 `:8000`（后端）。
+直接跑会命中旧的部署副本、测到错误的代码。务必用**独立端口**起自己的开发栈再测：
+
+```bash
+# 1) 后端起在独立端口 + 一次性 DB（不碰用户库）
+cd services/api
+E2EDB=$(mktemp).db
+NOVEL_AI_DB_URL="sqlite:///$E2EDB" .venv/bin/alembic upgrade head
+NOVEL_AI_DB_URL="sqlite:///$E2EDB" .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8099 &
+
+# 2) 前端起在独立端口，代理指向上面的后端（VITE_API_TARGET 覆盖默认 :8000）
+cd ../../apps/web
+VITE_API_TARGET="http://127.0.0.1:8099" npx vite --host 127.0.0.1 --port 5199 --strictPort &
+
+# 3) 跑 E2E（E2E_BASE/E2E_API 指向独立端口）
+E2E_BASE="http://127.0.0.1:5199" E2E_API="http://127.0.0.1:8099" npm run e2e
+```
+
+若默认端口没有被部署副本占用，也可以直接 `npm run dev`（前端 :5173 代理到后端 :8000）后 `npm run e2e`。
+
+### 故事地图页人工回归清单（E2E 未跑或环境受限时的兜底）
+
+时间线：① 切「叙事顺序/故事顺序」排列变化；② 悬停事件点出光晕 + 右侧预览；③ 顶部伏笔弧线（未回收虚线/超期变红）。
+人物网络：① 悬停节点一跳邻居高亮、其余淡出；② 主角有六边形环、半径随出场章数；③ 底部滑块回放只显示该章前已出场人物。
+故事线：① 每条 thread 在其章节列打结点连线；② resolved 线回收后变淡；③ 悬停章节列头淡金背景 + 联动高亮。
+仪表盘：① 字数柱+移动平均线；② 连续性分数趋势（无数据显示空态）；③ 伏笔计数环（超期>0 变红）；④ 热力图点格跳人物网络。

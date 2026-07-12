@@ -201,6 +201,7 @@ class TimelineEventOut(Timestamped):
     chapter_id: Optional[str]
     title: str
     story_time: str
+    story_order: Optional[int] = None
     description: str
     character_ids_json: str
 

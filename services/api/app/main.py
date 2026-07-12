@@ -22,6 +22,7 @@ from app.routers import (
     prompts,
     references,
     story_engineering,
+    story_map,
     tasks,
     world_rules,
 )
@@ -30,6 +31,7 @@ from app.services.task_queue import task_queue
 from app.workflow.runner import loop_queue
 from app.services.multi_chapter import multi_chapter_queue
 from app.services.deconstruction import deconstruction_queue
+from app.services.story_map import story_map_extract_queue
 
 
 @asynccontextmanager
@@ -41,12 +43,13 @@ async def lifespan(_app: FastAPI):
     loop_queue.start()
     multi_chapter_queue.start()
     deconstruction_queue.start()
+    story_map_extract_queue.start()
     yield
 
 
 app = FastAPI(
     title="Novel Local AI API",
-    version="1.0.0",
+    version="1.1.0",
     description="Local-first novel writing, context building and model generation API.",
     lifespan=lifespan,
 )
@@ -72,6 +75,7 @@ for router in [
     references.router,
     story_engineering.router,
     deconstruction.router,
+    story_map.router,
     activity.router,
     loop_runs.router,
     tasks.router,

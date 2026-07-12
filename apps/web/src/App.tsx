@@ -16,7 +16,7 @@ interface RouteState {
 }
 
 const globalPages = new Set<GlobalPage>(["projects", "runs", "models", "prompts", "settings"]);
-const projectViews = new Set<ProjectView>(["overview", "chapters", "creative", "characters", "world", "runs", "advanced"]);
+const projectViews = new Set<ProjectView>(["overview", "chapters", "storymap", "creative", "characters", "world", "runs", "advanced"]);
 
 function parseRoute(): RouteState {
   const parts = window.location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);

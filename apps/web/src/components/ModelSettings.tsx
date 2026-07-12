@@ -16,6 +16,7 @@ interface ProviderForm {
   default_options: string;
   timeout_seconds: number;
   enabled: boolean;
+  presetKey: string;
 }
 
 interface ProviderPreset {
@@ -24,6 +25,15 @@ interface ProviderPreset {
   timeout: number;
   options: Record<string, unknown>;
   note: string;
+  // 发给后端的 provider_type；缺省时用预设 key 本身。
+  // 云端预设一律映射 "cloud_openai_compatible"，避免后端 get_adapter 抛 Unsupported provider type。
+  providerType?: string;
+  // 预设推荐模型名（渲染成 <datalist>，主力在前、便宜在后）。
+  suggestedModels?: string[];
+  // 云端预设标记：默认名用 "Cloud <label>"，并在下拉里归入「云端服务」分组。
+  cloud?: boolean;
+  // 默认模型名。
+  defaultModel?: string;
 }
 
 const providerPresets: Record<string, ProviderPreset> = {
@@ -82,6 +92,51 @@ const providerPresets: Record<string, ProviderPreset> = {
     timeout: 300,
     options: { temperature: 0.7, top_p: 0.95, max_tokens: 3200 },
     note: "仅作为可选审稿或复杂分析服务；API Key 保存在本地 SQLite。",
+    cloud: true,
+  },
+  deepseek: {
+    label: "DeepSeek",
+    providerType: "cloud_openai_compatible",
+    baseUrl: "https://api.deepseek.com",
+    timeout: 300,
+    options: { temperature: 0.7, top_p: 0.95, max_tokens: 3200 },
+    note: "1M 上下文；输入约 ¥1-3/百万 token；到 platform.deepseek.com 拿 Key。旧模型名 deepseek-chat / deepseek-reasoner 已于 2026-07-24 停用，请勿使用。",
+    cloud: true,
+    defaultModel: "deepseek-v4-flash",
+    suggestedModels: ["deepseek-v4-flash", "deepseek-v4-pro"],
+  },
+  xiaomi_mimo: {
+    label: "小米 MiMo",
+    providerType: "cloud_openai_compatible",
+    baseUrl: "https://api.xiaomimimo.com/v1",
+    timeout: 300,
+    options: { temperature: 0.7, top_p: 0.95, max_tokens: 3200 },
+    note: "1M 上下文；价格对标 DeepSeek；到 platform.xiaomimimo.com 拿 Key。本应用为纯文本生成 + JSON 提示词约束，不受其多轮工具调用已知问题影响。",
+    cloud: true,
+    defaultModel: "mimo-v2.5",
+    suggestedModels: ["mimo-v2.5", "mimo-v2.5-pro"],
+  },
+  minimax: {
+    label: "MiniMax",
+    providerType: "cloud_openai_compatible",
+    baseUrl: "https://api.minimaxi.com/v1",
+    timeout: 300,
+    options: { temperature: 0.7, top_p: 0.95, max_tokens: 3200, token_param: "max_completion_tokens" },
+    note: "国内站 api.minimaxi.com / 国际站 api.minimax.io（差一个 i）；M3 支持 1M 上下文。MiniMax 已弃用 max_tokens，本预设通过 token_param 自动改用 max_completion_tokens。Key 在对应控制台创建。",
+    cloud: true,
+    defaultModel: "MiniMax-M2.7",
+    suggestedModels: ["MiniMax-M3", "MiniMax-M2.7"],
+  },
+  siliconflow: {
+    label: "SiliconFlow 硅基流动",
+    providerType: "cloud_openai_compatible",
+    baseUrl: "https://api.siliconflow.cn/v1",
+    timeout: 300,
+    options: { temperature: 0.7, top_p: 0.95, max_tokens: 3200 },
+    note: "聚合平台，一把 Key 调多家开源模型（DeepSeek/MiniMax/Qwen/GLM/Kimi）；无 MiMo。模型名以 /v1/models 实时列表为准；到 cloud.siliconflow.cn 拿 Key。",
+    cloud: true,
+    defaultModel: "deepseek-ai/DeepSeek-V4-Flash",
+    suggestedModels: ["deepseek-ai/DeepSeek-V4-Flash", "deepseek-ai/DeepSeek-V4-Pro"],
   },
 };
 
@@ -117,18 +172,32 @@ const parameterGuide = [
   ["seed", "随机种子", "整数", "固定后便于复现实验；删除该字段恢复随机。"],
 ];
 
-function formFromPreset(providerType = "llama_cpp"): ProviderForm {
-  const preset = providerPresets[providerType] || providerPresets.openai_compatible;
+function formFromPreset(presetKey = "llama_cpp"): ProviderForm {
+  const preset = providerPresets[presetKey] || providerPresets.openai_compatible;
   return {
-    name: `Local ${preset.label}`,
-    provider_type: providerType,
+    // 预设 key 与后端 provider_type 解耦：云端一律映射合法值 cloud_openai_compatible。
+    name: `${preset.cloud ? "Cloud" : "Local"} ${preset.label}`,
+    provider_type: preset.providerType ?? presetKey,
     base_url: preset.baseUrl,
-    model: "",
+    model: preset.defaultModel ?? "",
     api_key: "",
     default_options: JSON.stringify(preset.options, null, 2),
     timeout_seconds: preset.timeout,
     enabled: true,
+    presetKey,
   };
+}
+
+// 已有 provider 反推它属于哪个预设（用于选中已存在配置时正确回填下拉与说明）：
+// 优先按 base_url 精确匹配云端预设，匹配不到再退回 provider_type 本身。
+function presetKeyForProvider(provider: ModelProvider): string {
+  const base = (provider.base_url || "").replace(/\/+$/, "");
+  const match = Object.entries(providerPresets).find(
+    ([, preset]) => preset.baseUrl.replace(/\/+$/, "") === base,
+  );
+  if (match) return match[0];
+  if (providerPresets[provider.provider_type]) return provider.provider_type;
+  return provider.provider_type === "cloud_openai_compatible" ? "cloud_openai_compatible" : "openai_compatible";
 }
 
 function formFromProvider(provider: ModelProvider): ProviderForm {
@@ -141,6 +210,7 @@ function formFromProvider(provider: ModelProvider): ProviderForm {
     default_options: provider.default_options_json,
     timeout_seconds: provider.timeout_seconds,
     enabled: provider.enabled,
+    presetKey: presetKeyForProvider(provider),
   };
 }
 
@@ -164,7 +234,11 @@ export default function ModelSettings() {
     () => providers.find((provider) => provider.id === selectedId) || null,
     [providers, selectedId],
   );
-  const preset = providerPresets[form.provider_type] || providerPresets.openai_compatible;
+  const preset = providerPresets[form.presetKey] || providerPresets.openai_compatible;
+  // DeepSeek 旧模型名 deepseek-chat / deepseek-reasoner 已于 2026-07-24 停用：命中即内联警告。
+  const deprecatedDeepSeekModel =
+    form.base_url.includes("api.deepseek.com") &&
+    /^(deepseek-chat|deepseek-reasoner)/.test(form.model.trim());
 
   async function load(selectId?: string | null) {
     const data = await api<ModelProvider[]>("/model-providers");
@@ -223,14 +297,18 @@ export default function ModelSettings() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function changeProviderType(providerType: string) {
-    const nextPreset = providerPresets[providerType] || providerPresets.openai_compatible;
+  function changePreset(presetKey: string) {
+    const nextPreset = providerPresets[presetKey] || providerPresets.openai_compatible;
     setForm({
       ...form,
-      provider_type: providerType,
+      presetKey,
+      // 预设 key 与后端 provider_type 解耦：云端一律映射合法值，绝不把 "deepseek" 这类 key 直接发给后端。
+      provider_type: nextPreset.providerType ?? presetKey,
       base_url: nextPreset.baseUrl,
       timeout_seconds: nextPreset.timeout,
       default_options: JSON.stringify(nextPreset.options, null, 2),
+      // 切到有默认模型的云端预设时顺手填入推荐模型；本地预设保留用户已填的模型名。
+      model: nextPreset.defaultModel ?? form.model,
     });
     setMessage(`已载入 ${nextPreset.label} 默认配置，可继续修改。`);
   }
@@ -330,15 +408,17 @@ export default function ModelSettings() {
     const template = model.provider_template;
     if (!template) return;
     setSelectedId(null);
+    const templateType = String(template.provider_type || "openai_compatible");
     setForm({
       name: String(template.name || model.name),
-      provider_type: String(template.provider_type || "openai_compatible"),
+      provider_type: templateType,
       base_url: String(template.base_url || ""),
       model: String(template.model || model.name),
       api_key: "",
       default_options: JSON.stringify(template.default_options || {}, null, 2),
       timeout_seconds: Number(template.timeout_seconds || 300),
       enabled: Boolean(template.enabled ?? true),
+      presetKey: providerPresets[templateType] ? templateType : "openai_compatible",
     });
     setMessage(`已载入 ${model.name} 的默认配置；保存并测试后使用。`);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -418,8 +498,17 @@ export default function ModelSettings() {
               <div><label className="label">配置名称</label><input className="field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
               <div>
                 <label className="label">运行时类型</label>
-                <select className="field" value={form.provider_type} onChange={(e) => changeProviderType(e.target.value)}>
-                  {Object.entries(providerPresets).map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}
+                <select className="field" value={form.presetKey} onChange={(e) => changePreset(e.target.value)}>
+                  <optgroup label="本地服务">
+                    {Object.entries(providerPresets)
+                      .filter(([, item]) => !item.cloud)
+                      .map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}
+                  </optgroup>
+                  <optgroup label="云端服务">
+                    {Object.entries(providerPresets)
+                      .filter(([, item]) => item.cloud)
+                      .map(([value, item]) => <option key={value} value={value}>{item.label}</option>)}
+                  </optgroup>
                 </select>
               </div>
               <div className="col-span-2">
@@ -429,8 +518,24 @@ export default function ModelSettings() {
               </div>
               <div>
                 <label className="label">模型名称 / Alias</label>
-                <input className="field" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} required />
+                <input
+                  className="field"
+                  value={form.model}
+                  onChange={(e) => setForm({ ...form, model: e.target.value })}
+                  list={preset.suggestedModels ? `models-${form.presetKey}` : undefined}
+                  required
+                />
+                {preset.suggestedModels && (
+                  <datalist id={`models-${form.presetKey}`}>
+                    {preset.suggestedModels.map((name) => <option key={name} value={name} />)}
+                  </datalist>
+                )}
                 <p className="mt-1 text-[11px] text-black/40">必须与服务暴露的模型 ID 一致。</p>
+                {deprecatedDeepSeekModel && (
+                  <p className="mt-1 rounded-lg bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700">
+                    该模型名已于 2026-07-24 停用，请改用 deepseek-v4-flash 或 deepseek-v4-pro。
+                  </p>
+                )}
               </div>
               <div>
                 <label className="label">请求超时（秒）</label>
@@ -440,6 +545,9 @@ export default function ModelSettings() {
               <div className="col-span-2">
                 <label className="label">API Key（本地服务通常留空）</label>
                 <input className="field" type="password" value={form.api_key} onChange={(e) => setForm({ ...form, api_key: e.target.value })} autoComplete="off" />
+                <p className="mt-1 text-[11px] text-black/40">
+                  Key 仅保存在本机 SQLite 数据库；请勿把数据库文件、日志或截图分享给他人。
+                </p>
               </div>
               <div className="col-span-2">
                 <div className="mb-1 flex items-center justify-between">

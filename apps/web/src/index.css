@@ -59,3 +59,14 @@ textarea {
     @apply btn border border-black/10 bg-white/70 hover:bg-white;
   }
 }
+
+/* 故事地图：参考页 E2 光晕/悬停过渡（SVG 节点）。 */
+.storymap-dot {
+  transition: r 0.12s ease;
+}
+.storymap-halo {
+  transition: r 0.12s ease, opacity 0.12s ease;
+}
+.storymap-node {
+  transition: opacity 0.12s ease;
+}

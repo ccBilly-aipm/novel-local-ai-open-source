@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "novel-local-ai-api"
-version = "1.0.0"
+version = "1.1.0"
 description = "Local-first novel writing FastAPI service"
 requires-python = ">=3.9"
 dependencies = [

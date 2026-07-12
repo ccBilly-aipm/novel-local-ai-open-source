@@ -1,18 +1,32 @@
 {
   "name": "novel-local-ai-web",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "e2e": "playwright test"
   },
   "dependencies": {
+    "d3-array": "3.2.4",
+    "d3-force": "3.0.0",
+    "d3-scale": "4.0.2",
+    "d3-selection": "3.0.0",
+    "d3-shape": "3.2.0",
+    "d3-zoom": "3.0.0",
     "react": "18.3.1",
     "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/d3-array": "3.2.2",
+    "@types/d3-force": "3.0.10",
+    "@types/d3-scale": "4.0.9",
+    "@types/d3-selection": "3.0.11",
+    "@types/d3-shape": "3.1.8",
+    "@types/d3-zoom": "3.0.8",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
     "@vitejs/plugin-react": "6.0.2",

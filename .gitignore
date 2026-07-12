@@ -22,6 +22,9 @@ apps/web/dist/
 apps/web/*.tsbuildinfo
 apps/web/vite.config.js
 apps/web/vite.config.d.ts
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/playwright/.cache/
 _ai_fix_backup/
 
 # Local benchmark artifacts. Keep scripts and test cases, not machine-specific output.

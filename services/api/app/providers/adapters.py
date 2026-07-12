@@ -28,11 +28,12 @@ class OpenAICompatibleAdapter(ModelAdapter):
         headers = {"Content-Type": "application/json"}
         if self.provider.api_key:
             headers["Authorization"] = "Bearer {}".format(self.provider.api_key)
+        token_param = str(settings.pop("token_param", "max_tokens") or "max_tokens")
         payload = {
             "model": self.provider.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": settings.pop("temperature", 0.7),
-            "max_tokens": settings.pop("max_tokens", 1800),
+            token_param: settings.pop("max_tokens", 1800),
             **settings,
         }
         with httpx.Client(timeout=self.provider.timeout_seconds) as client:
@@ -76,11 +77,12 @@ class OpenAICompatibleAdapter(ModelAdapter):
         headers = {"Content-Type": "application/json"}
         if self.provider.api_key:
             headers["Authorization"] = "Bearer {}".format(self.provider.api_key)
+        token_param = str(settings.pop("token_param", "max_tokens") or "max_tokens")
         payload = {
             "model": self.provider.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": settings.pop("temperature", 0.7),
-            "max_tokens": settings.pop("max_tokens", 1800),
+            token_param: settings.pop("max_tokens", 1800),
             "stream": True,
             **settings,
         }
@@ -231,6 +233,7 @@ class LMStudioAdapter(ModelAdapter):
         base_url = self.provider.base_url.rstrip("/")
         if base_url.endswith("/v1"):
             base_url = base_url[:-3]
+        settings.pop("token_param", None)
         max_tokens = settings.pop("max_output_tokens", settings.pop("max_tokens", 2400))
         chatml_prompt = (
             "<|im_start|>system\n"
@@ -284,6 +287,7 @@ class LMStudioAdapter(ModelAdapter):
         base_url = self.provider.base_url.rstrip("/")
         if base_url.endswith("/v1"):
             base_url = base_url[:-3]
+        settings.pop("token_param", None)
         max_tokens = settings.pop("max_output_tokens", settings.pop("max_tokens", 2400))
         settings.pop("reasoning", None)
         chatml_prompt = (
@@ -361,6 +365,7 @@ class KoboldCppAdapter(ModelAdapter):
         if self.provider.base_url.rstrip("/").endswith("/v1"):
             return OpenAICompatibleAdapter(self.provider).generate_text(prompt, options)
         settings = merged_options(self.provider, options)
+        settings.pop("token_param", None)
         payload = {
             "prompt": prompt,
             "max_length": settings.pop("max_tokens", settings.pop("max_length", 1800)),

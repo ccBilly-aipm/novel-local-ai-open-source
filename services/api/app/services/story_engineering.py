@@ -30,6 +30,7 @@ from app.models.entities import (
     WorldRule,
 )
 from app.services.deconstruction import DECON_TYPES
+from app.services.story_map import STORYMAP_TYPES, accept_storymap_candidate
 from app.providers.adapters import get_adapter
 from app.schemas.story_engineering import (
     ChapterPlanOutput,
@@ -60,7 +61,8 @@ STORY_ENGINEERING_TYPES = {spec[2] for spec in OPERATION_SPECS.values()}
 # 阶段 B：章节提交后抽取的状态变更候选，也通过同一套 accept/reject/list 接口处理。
 STATE_MEMORY_TYPES = {"staged_state_change"}
 # D1：拆解参考小说产生的候选（staged_decon_*），同样走这套接口。
-ACCEPTABLE_TYPES = STORY_ENGINEERING_TYPES | STATE_MEMORY_TYPES | DECON_TYPES
+# 故事地图：AI 提取产生的候选（staged_storymap_*），复用同一套 accept/reject/list/restore 接口。
+ACCEPTABLE_TYPES = STORY_ENGINEERING_TYPES | STATE_MEMORY_TYPES | DECON_TYPES | STORYMAP_TYPES
 
 
 def _novel_context(novel: Novel) -> str:
@@ -452,6 +454,11 @@ def accept_candidate(db: Session, record: StoryMemoryRecord) -> dict:
         db.flush()
         target_type, target_id = "foreshadowing", foreshadowing.id
         detail = "新建伏笔（拆解）"
+
+    elif record.record_type in STORYMAP_TYPES:
+        # 故事地图候选：委派给 story_map 的接受逻辑（新路径正确解析人物名→id、章节锚点，
+        # 修复旧接受逻辑丢关联的缺陷；旧 record_type 行为完全不动）。
+        target_type, target_id, detail = accept_storymap_candidate(db, record, novel)
 
     record.status = "accepted"
     metadata = loads(record.metadata_json, {})

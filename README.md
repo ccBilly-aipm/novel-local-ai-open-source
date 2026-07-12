@@ -5,11 +5,11 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB.svg)](services/api/pyproject.toml)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](apps/web/package.json)
-[![Version](https://img.shields.io/badge/version-v1.0.0-2E6F5E.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v1.1.0-2E6F5E.svg)](CHANGELOG.md)
 
-Novel Local AI 是面向 macOS 的本地优先 AI 小说写作工作台。它把故事资料、章节计划、正文生成、连续性检查、自动修订、人工审批和长期记忆放进一套可追踪流程，并优先连接 LM Studio、llama.cpp、Ollama 等本机模型服务。
+Novel Local AI 是面向 macOS 的本地优先 AI 小说写作工作台。它把故事资料、章节计划、正文生成、连续性检查、自动修订、人工审批、故事地图可视化和长期记忆放进一套可追踪流程，并优先连接 LM Studio、llama.cpp、Ollama 等本机模型服务，也支持接入 OpenAI 兼容的云端模型预设。
 
-当前 `v1.0.0` 是可运行的开源 MVP 3 基线，不是商业发布完成品。模型权重、用户数据库、运行日志和 API Key 不包含在仓库中。
+当前 `v1.1.0` 是可运行的开源 MVP 3 基线，不是商业发布完成品。相比 `v1.0.0` 新增了故事地图可视化（时间线 / 人物网络 / 故事线织线图 / 统计仪表盘 + AI 逐章提取）和云端模型预设（DeepSeek / 小米 MiMo / MiniMax / SiliconFlow）。模型权重、用户数据库、运行日志和 API Key 不包含在仓库中。
 
 ## 界面预览
 
@@ -126,7 +126,7 @@ cd ../../apps/web
 npm run build
 ```
 
-`v1.0.0` 开源基线发布前验证为：后端 `70 passed`，前端生产构建通过。当前尚无浏览器 E2E 测试。
+`v1.1.0` 开源基线发布前验证为：后端 `82 passed`，前端生产构建通过，并新增 Playwright 浏览器 E2E 冒烟。
 
 ## 数据与隐私
 

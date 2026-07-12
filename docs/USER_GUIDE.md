@@ -72,6 +72,38 @@ http://127.0.0.1:5173/
 
 建议先做一次短文本测试，再运行长章节。上下文和最大输出应根据模型真实能力配置；设置更大的数值不会让不支持该长度的模型自动获得更长上下文。
 
+### 云端 API（可选）
+
+Novel Local AI 始终是本地优先的：默认、推荐的写作方式仍是本机模型。云端 API 只是可选加速项，适合审稿、结构提取，或本机配置暂时跑不动大模型时的过渡。
+
+在“运行时类型”下拉的「云端服务」分组里，内置了四个开箱即用的预设。选中后会自动填好 Base URL、推荐模型名和合理参数，你只需填入自己的 API Key：
+
+| 服务 | Base URL | 推荐模型（主力 / 便宜） | 拿 Key 入口 |
+|---|---|---|---|
+| DeepSeek | `https://api.deepseek.com` | `deepseek-v4-pro` / `deepseek-v4-flash` | platform.deepseek.com |
+| 小米 MiMo | `https://api.xiaomimimo.com/v1` | `mimo-v2.5-pro` / `mimo-v2.5` | platform.xiaomimimo.com |
+| MiniMax | 国内 `https://api.minimaxi.com/v1`；国际 `https://api.minimax.io/v1`（差一个 i） | `MiniMax-M3` / `MiniMax-M2.7` | platform.minimax.io / minimaxi.com |
+| SiliconFlow 硅基流动 | `https://api.siliconflow.cn/v1` | 照其模型目录，如 `deepseek-ai/DeepSeek-V4-Flash` | cloud.siliconflow.cn |
+
+几点提醒：
+
+- DeepSeek 旧模型名 `deepseek-chat` / `deepseek-reasoner` 已于 2026-07-24 停用，请使用 `deepseek-v4-*`。表单会在检测到旧名时给出内联警告。
+- MiniMax 已弃用 `max_tokens`，其预设已通过 `token_param: "max_completion_tokens"` 自动改用新参数，无需手动处理。
+- SiliconFlow 是聚合平台，一把 Key 可调多家开源模型，但没有 MiMo；模型名以其 `/v1/models` 实时列表为准。
+- 填好 Key 后先点“测试真实生成”确认连通，再用于正式章节；连续性检查角色仍建议用推理型模型，勿用去审核模型。
+- API Key 仅保存在本机 SQLite 数据库；不要把数据库文件、日志或截图分享给他人。
+
+### 故事地图（1.1.0 新增）
+
+每个项目内、章节页旁多了「故事地图」页，用四个联动视图把小说的结构可视化：
+
+- **时间线**：以章节为主轴排布事件，支持叙事顺序 / 故事顺序切换，并用弧线标出伏笔的埋设与回收。
+- **人物网络**：d3-force 力导向图展示人物关系，可用章节滑块回放关系随剧情的演变。
+- **故事线织线图**：泳道网格呈现各情节线在章节间的穿插。
+- **统计仪表盘**：字数、连续性分数、伏笔计数（含超期）与人物出场热力图。
+
+内容有两种来源：在页面里**手动添加/内联编辑**时间线事件、情节线、伏笔；或用 **AI 逐章提取**——选好范围与 Provider 后逐章扫描，生成候选写入暂存区，再逐条接受 / 忽略（也可一键接受高置信候选）。提取依赖一个可用的模型 Provider（本机或云端均可）；无模型服务时会优雅失败并留下 PARTIAL 记录，不影响已有数据。
+
 ## 5. 推荐写作流程
 
 1. 在“项目”创建一本小说。

@@ -242,6 +242,20 @@ currently behind migration head.
 | `docs/` | Safe | Keep evidence and dates current |
 | `data/` | Do not modify casually | User/database state |
 
+## 故事地图后端（阶段 1，additive）
+
+| File | Guidance | Reason |
+|---|---|---|
+| `services/api/app/services/story_map.py` | Additive only | 聚合读 + 提取管线 + 新 record_type 接受逻辑；不改旧 record_type 行为 |
+| `services/api/app/routers/story_map.py` | Additive only | 独立路由：聚合读 / 三实体 CRUD / 提取 run |
+| `services/api/app/schemas/story_map.py` | Additive only | 独立 schema，不动既有 *Out schema |
+| `services/api/app/prompts/story_map_extraction.md` | Editable | 单章结构提取模板（注册键 `sm_extract`） |
+| `services/api/app/models/auto_entities.py`（`StoryMapExtractRun`） | Requires migration | 提取进度表；改字段须新增 migration |
+| `services/api/app/services/story_engineering.py` | Do not alter old branches | 仅新增 storymap 委派分支，旧接受行为不动 |
+
+故事地图数据接口详见 `docs/32_story_map_backend_report.md`。候选的 list/accept/reject/restore
+复用 story-engineering 接口（record_type=`staged_storymap_*`）。
+
 ## Mandatory invariant
 
 The old endpoint:

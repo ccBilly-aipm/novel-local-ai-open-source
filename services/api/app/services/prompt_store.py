@@ -47,6 +47,8 @@ PROMPT_REGISTRY: Dict[str, Dict[str, str]] = {
     "se_world_rules": {"file": "story_engineering/world_rules.md", "name": "故事工程·世界规则", "description": "从想法生成世界规则。"},
     "se_chapter_plan": {"file": "story_engineering/chapter_plan.md", "name": "故事工程·章节计划", "description": "从想法生成章节计划。"},
     "se_pastiche": {"file": "story_engineering/pastiche_framework.md", "name": "故事工程·仿写框架", "description": "基于已采纳设定生成原创仿写框架（含 surface/pattern/signature 三层迁移教义）。"},
+    # —— 故事地图 AI 提取 ——
+    "sm_extract": {"file": "story_map_extraction.md", "name": "故事地图·结构提取", "description": "从单章正文提取时间线事件 / 人物关系 / 情节线 / 伏笔候选。"},
 }
 
 # 旧版 6 个的输出 schema（仅展示用）；其余给通用占位。
